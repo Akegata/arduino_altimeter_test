@@ -12,15 +12,15 @@ SFE_BMP180 pressure;
 #define PIN 2
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(4, PIN, NEO_GRB + NEO_KHZ800);
 
-uint16_t blue      = strip.Color(0, 0, 255);
-uint16_t cyan      = strip.Color(36, 182, 255);
-uint16_t cyan_dim  = strip.Color(0, 20, 20);
-uint16_t green     = strip.Color(0, 255, 0);
-uint16_t red       = strip.Color(255, 0, 0);
-uint16_t violet    = strip.Color(109, 36, 255);
-uint16_t white_dim = strip.Color(20, 20, 20);
-uint16_t yellow    = strip.Color(255, 255, 0);
-uint16_t off       = strip.Color(0, 0, 0);
+uint32_t blue      = strip.Color(0, 0, 255);
+uint32_t cyan      = strip.Color(36, 182, 255);
+uint32_t cyan_dim  = strip.Color(0, 20, 20);
+uint32_t green     = strip.Color(0, 255, 0);
+uint32_t red       = strip.Color(255, 0, 0);
+uint32_t violet    = strip.Color(109, 36, 255);
+uint32_t white_dim = strip.Color(20, 20, 20);
+uint32_t yellow    = strip.Color(255, 255, 0);
+uint32_t off       = strip.Color(0, 0, 0);
 
 int exitalt  = 4000; // Set exit altitude.
 int breakalt = 1500; // Set breakoff altitude.
@@ -33,18 +33,18 @@ double baseline;
 int startup = 0;
 int descending = 0;
 
-int setLEDColors(int nr_leds, int color) {
+int setLEDColors(int nr_leds, uint32_t color) {
   for(uint16_t i=0; i<nr_leds; i++) {
       strip.setPixelColor(i, color);
   }
   strip.show();
 }
 
-int blinkLEDColors(int nr_leds, int color, int on_time, int off_time) {
+int blinkLEDColors(int nr_leds, uint32_t color, int on_time, int off_time) {
   for(uint16_t i=0; i<nr_leds; i++) {
       strip.setPixelColor(i, color);
-      strip.show();
   }
+  strip.show();
   delay(on_time);
   for(uint16_t i=0; i<nr_leds; i++) {
       strip.setPixelColor(i, off);
@@ -75,28 +75,34 @@ void loop() {
   int lastaltitude = agl;
 
   if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
-    setLEDColors(num_leds, yellow);
+    setLEDColors(num_leds, violet);
     delay(1000);
     setLEDColors(num_leds, off);
+    delay(1000);
     startup = 1;
   }
 
   if (descending == 0 && agl < 300) { // Blinks green every five seconds before 300 AGL.
-    blinkLEDColors(1,green,100,5000);
+    blinkLEDColors(1,red,100,5000);
   }
 
-  // Blink yellow five times when descent starts and proceed to setting altitude lights.
+  // Blink green five times when descent starts and proceed to setting altitude lights.
   while (descending == 0) {
     if (lastaltitude - 50 > (agl)) {
-      descending = 1;
-    } else
-    {
       for(uint16_t i=0; i<5; i++) {
         setLEDColors(num_leds, green);
         delay(100);
         setLEDColors(num_leds, off);
       }
-      delay(5000);
+      descending = 1;
+    } else
+    {
+      for(uint16_t i=0; i<5; i++) {
+        setLEDColors(1, green);
+        delay(100);
+        setLEDColors(num_leds, off);
+      }
+      delay(10000);
       lastaltitude = agl;
     }
   }
@@ -123,8 +129,17 @@ void loop() {
     else if (agl < 1000 && agl > 600) {
       blinkLEDColors(num_leds,violet,300,300);
     }
-    else if (agl < 600) {
+    else if (agl < 600 && agl > 300) {
       setLEDColors(num_leds,off);
+    }
+    else if (agl < 300 && agl > 200) {
+      setLEDColors(3,green);
+    }
+    else if (agl < 200 && agl > 100) {
+      setLEDColors(2,blue);
+    }
+    else if (agl < 100) {
+      setLEDColors(1,violet);
     }
   }
 }
