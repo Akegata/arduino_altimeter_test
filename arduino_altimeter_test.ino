@@ -94,10 +94,15 @@ void loop() {
   /* Reversed logic due to build in pullup resistor.
   The reading is low when the button is pressed. */
   if (calibrateButtonPressed == LOW) {
-    Serial.println("Sensor value low");
     baseline = getPressure(); 
-    Serial.println("baseline = ");
+
+    Serial.print("Sensor value low. Baseline = ");
+    Serial.println(baseline);
+    Serial.print("Written to EEPROM:");
     Serial.println(baseline / 10);
+    Serial.print("Pressure = ");
+    Serial.println(P);
+
     EEPROM.write(eeprom_address, baseline / 10);
  //   setLEDColors(num_leds,green);
     startup = 0;
@@ -105,11 +110,24 @@ void loop() {
     delay(1000);
   } else {
     setLEDColors(num_leds,off);
-    baseline = EEPROM.read(eeprom_address);
-    Serial.println("Sensor value high");
-    Serial.println("baseline = ");
-    Serial.println(baseline);
+    baseline = EEPROM.read(eeprom_address) * 10;
 
+//  The problem here is that the EEPROM only handles numbers up to 255.
+//  The pressure needs to be more accurate than that. An example of a pressure reading on ground level is 517.47.
+//  If this is simplified to only 51, too much information is lost and accuracy suffers.
+//  At least two decimals needs to be saved. This of course cannot be done on one EEPROM address.
+//  A solution would instead be to add the whole numbers to one EEPROM address, and the decimals to another.
+
+    Serial.print("Sensor value high. Baseline = ");
+    Serial.print(baseline);
+    Serial.print(". agl = ");
+    Serial.print(agl);
+    Serial.print("Pressure (P) = ");
+    Serial.print(P);
+    Serial.print(". EEPROM value = ");
+    Serial.println(EEPROM.read(eeprom_address));
+    delay(500);
+    
     if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
       setLEDColors(num_leds, violet);
       delay(1000);
