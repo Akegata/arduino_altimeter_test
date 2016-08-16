@@ -118,6 +118,9 @@ void loop() {
 //  At least two decimals needs to be saved. This of course cannot be done on one EEPROM address.
 //  A solution would instead be to add the whole numbers to one EEPROM address, and the decimals to another.
 
+//  Probably better solution: write every number to one EEPROM address. The comma sign is written as 255.
+//  Read the EEPROM addresses starting at 0 and stopping at two addresses after the 255.
+
     Serial.print("Sensor value high. Baseline = ");
     Serial.print(baseline);
     Serial.print(". agl = ");
