@@ -103,14 +103,16 @@ void loop() {
     Serial.print("Pressure = ");
     Serial.println(P);
 
-    EEPROM.write(eeprom_address, baseline / 10);
+    EEPROM.put(eeprom_address, baseline);
+//    EEPROM.write(eeprom_address, baseline / 10);
  //   setLEDColors(num_leds,green);
     startup = 0;
     cycleLEDColors(num_leds,green,200);
     delay(1000);
   } else {
     setLEDColors(num_leds,off);
-    baseline = EEPROM.read(eeprom_address) * 10;
+    baseline = EEPROM.get(eeprom_address);
+//    baseline = EEPROM.read(eeprom_address) * 10;
 
 //  The problem here is that the EEPROM only handles numbers up to 255.
 //  The pressure needs to be more accurate than that. An example of a pressure reading on ground level is 517.47.
