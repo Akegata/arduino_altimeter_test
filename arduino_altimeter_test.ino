@@ -36,6 +36,12 @@ double baseline;
 int startup = 0;
 int altreached = 0;
 
+struct MyObject{
+  float field1;
+  byte field2;
+  char name[10];
+};
+
 int setLEDColors(int nr_leds, uint32_t color) {
   for(uint16_t i=0; i<nr_leds; i++) {
       strip.setPixelColor(i, color);
@@ -111,7 +117,8 @@ void loop() {
     delay(1000);
   } else {
     setLEDColors(num_leds,off);
-    baseline = EEPROM.get(eeprom_address);
+    MyObject read_baseline;
+    EEPROM.get(eeprom_address, read_baseline);
 //    baseline = EEPROM.read(eeprom_address) * 10;
 
 //  The problem here is that the EEPROM only handles numbers up to 255.
@@ -127,7 +134,7 @@ void loop() {
     Serial.print(baseline);
     Serial.print(". agl = ");
     Serial.print(agl);
-    Serial.print("Pressure (P) = ");
+    Serial.print(". Pressure (P) = ");
     Serial.print(P);
     Serial.print(". EEPROM value = ");
     Serial.println(EEPROM.read(eeprom_address));
