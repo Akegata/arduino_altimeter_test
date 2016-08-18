@@ -37,7 +37,7 @@ int startup = 0;
 int altreached = 0;
 
 struct MyObject{
-  float field1;
+  double field1;
   byte field2;
   char name[10];
 };
@@ -92,9 +92,11 @@ void setup() {
 }
 
 void loop() {
-  double a, P;
+  MyObject read_baseline;
+  double agl, P;
   P = getPressure();
-  int agl = pressure.altitude(P, baseline);
+  EEPROM.get(eeprom_address, read_baseline);
+  agl = pressure.altitude(P, read_baseline.field1);
   int calibrateButtonPressed = digitalRead(baseline_pin);
 
   /* Reversed logic due to build in pullup resistor.
@@ -117,9 +119,7 @@ void loop() {
     delay(1000);
   } else {
     setLEDColors(num_leds,off);
-    MyObject read_baseline;
     EEPROM.get(eeprom_address, read_baseline);
-//    baseline = EEPROM.read(eeprom_address) * 10;
 
 //  The problem here is that the EEPROM only handles numbers up to 255.
 //  The pressure needs to be more accurate than that. An example of a pressure reading on ground level is 517.47.
@@ -131,13 +131,11 @@ void loop() {
 //  Read the EEPROM addresses starting at 0 and stopping at two addresses after the 255.
 
     Serial.print("Sensor value high. Baseline = ");
-    Serial.print(baseline);
+    Serial.print(read_baseline.field1);
     Serial.print(". agl = ");
     Serial.print(agl);
     Serial.print(". Pressure (P) = ");
-    Serial.print(P);
-    Serial.print(". EEPROM value = ");
-    Serial.println(EEPROM.read(eeprom_address));
+    Serial.println(P);
     delay(500);
     
     if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
@@ -170,7 +168,7 @@ void loop() {
     }
   }
 }
-  
+  /*
   double getPressure() {
     char status;
     double T, P, p0, a;
@@ -185,4 +183,37 @@ void loop() {
         return (P);
       }
     else Serial.println("error starting temperature measurement\n");
+  }*/
+
+
+  double getPressure()
+{
+  char status;
+  double T,P,p0,a;
+
+  status = pressure.startTemperature();
+  if (status != 0)
+  {
+    delay(status);
+
+    status = pressure.getTemperature(T);
+    if (status != 0)
+    {
+      status = pressure.startPressure(3);
+      if (status != 0)
+      {
+        delay(status);
+
+        status = pressure.getPressure(P,T);
+        if (status != 0)
+        {
+          return(P);
+        }
+        else Serial.println("error retrieving pressure measurement\n");
+      }
+      else Serial.println("error starting pressure measurement\n");
+    }
+    else Serial.println("error retrieving temperature measurement\n");
   }
+  else Serial.println("error starting temperature measurement\n");
+}
