@@ -28,6 +28,8 @@ int pullalt      = 1000; // Set pull altitude.
 int harddeck     = 700;  // Set hard deck.
 int num_leds     = 4;    // Set number of LEDs
 int baseline_pin = 9; // Set pin for baseline button.
+int powercycles  = 0;
+int powercycles_updated = 0;
 
 // Address in the EEPROM where the baseline reading should be stored.
 int baseline_address = 1;
@@ -99,6 +101,7 @@ void loop() {
   double agl, P;
   P = getPressure();
   EEPROM.get(baseline_address, read_baseline);
+  int calibrate = (EEPROM.read(0));
   agl = pressure.altitude(P, read_baseline.field1);
   int calibrateButtonPressed = digitalRead(baseline_pin);
 
@@ -106,15 +109,24 @@ void loop() {
   /* Reversed logic due to build in pullup resistor.
   The reading is low when the button is pressed. */
 
-  if (EEPROM.read(0) == 3) {
+  if (calibrate == 3) {
     // calibrate)
-    
+    baseline = getPressure(); 
+    EEPROM.put(baseline_address, baseline);
   }
-  else {
-/*    int powercycles = (EEPROM.read(0) + 1);
-    EEPROM.write(0,powercycles)*/
+  else if (powercycles_updated == 0) {
+    powercycles = (calibrate + 1);
+    Serial.print("Power cycles updated = ");
+    Serial.println(powercycles_updated);
+    Serial.print("Power cycles = ");
+    Serial.println(powercycles);
+    EEPROM.write(0,powercycles);
+    powercycles_updated = 1;
+    Serial.print("Power cycles updated = ");
+    Serial.println(powercycles_updated);
+    delay(2000);
   }
-  if (calibrateButtonPressed == LOW) {
+/*  if (calibrateButtonPressed == LOW) {
 
     // Make a new pressure reading.
     baseline = getPressure(); 
@@ -131,8 +143,12 @@ void loop() {
     startup = 0;
     cycleLEDColors(num_leds,green,200);
     delay(1000);
-  } else {
+  } else { */
     // If the calibrate button is not pressed, proceed as normal.
+
+    powercycles = (0);
+    EEPROM.write(0,powercycles);
+    
     setLEDColors(num_leds,off);
     EEPROM.get(baseline_address, read_baseline);
 
@@ -173,7 +189,7 @@ void loop() {
     }
     else if (agl < 1000 && agl > 500) {
       blinkLEDColors(num_leds,red,300,300);
-    }
+    //}
   }
 }
 
