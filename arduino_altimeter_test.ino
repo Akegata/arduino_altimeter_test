@@ -30,7 +30,7 @@ int num_leds     = 4;    // Set number of LEDs
 int baseline_pin = 9; // Set pin for baseline button.
 
 // Address in the EEPROM where the baseline reading should be stored.
-int eeprom_address = 0;
+int baseline_address = 1;
 
 double baseline;
 int startup = 0;
@@ -98,13 +98,22 @@ void loop() {
   MyObject read_baseline;
   double agl, P;
   P = getPressure();
-  EEPROM.get(eeprom_address, read_baseline);
+  EEPROM.get(baseline_address, read_baseline);
   agl = pressure.altitude(P, read_baseline.field1);
   int calibrateButtonPressed = digitalRead(baseline_pin);
 
   // If the calibrate button is pressed, create a new baseline.
   /* Reversed logic due to build in pullup resistor.
   The reading is low when the button is pressed. */
+
+  if (EEPROM.read(0) == 3) {
+    // calibrate)
+    
+  }
+  else {
+/*    int powercycles = (EEPROM.read(0) + 1);
+    EEPROM.write(0,powercycles)*/
+  }
   if (calibrateButtonPressed == LOW) {
 
     // Make a new pressure reading.
@@ -118,14 +127,14 @@ void loop() {
     Serial.println(P);
 
     // Store the new pressure in EEPROM.
-    EEPROM.put(eeprom_address, baseline);
+    EEPROM.put(baseline_address, baseline);
     startup = 0;
     cycleLEDColors(num_leds,green,200);
     delay(1000);
   } else {
     // If the calibrate button is not pressed, proceed as normal.
     setLEDColors(num_leds,off);
-    EEPROM.get(eeprom_address, read_baseline);
+    EEPROM.get(baseline_address, read_baseline);
 
     Serial.print("Sensor value high. Baseline = ");
     Serial.print(read_baseline.field1);
