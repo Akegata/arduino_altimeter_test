@@ -29,10 +29,10 @@ int harddeck     = 700;  // Set hard deck.
 int num_leds     = 4;    // Set number of LEDs
 int baseline_pin = 9; // Set pin for baseline button.
 
+// Address in the EEPROM where the baseline reading should be stored.
 int eeprom_address = 0;
 
 double baseline;
-
 int startup = 0;
 int altreached = 0;
 
@@ -42,6 +42,7 @@ struct MyObject{
   char name[10];
 };
 
+// Sets the specified numbers of LEDs to the specifiedcolor.
 int setLEDColors(int nr_leds, uint32_t color) {
   for(uint16_t i=0; i<nr_leds; i++) {
       strip.setPixelColor(i, color);
@@ -49,6 +50,7 @@ int setLEDColors(int nr_leds, uint32_t color) {
   strip.show();
 }
 
+// Cycles through the LED's, only lighting up one LED at a time.
 int cycleLEDColors(int nr_leds, uint32_t color, int cycle_time) {
   setLEDColors(num_leds,off);
   for(uint16_t i=0; i<nr_leds; i++) {
@@ -61,6 +63,7 @@ int cycleLEDColors(int nr_leds, uint32_t color, int cycle_time) {
   strip.show();
 }
 
+// Blinks the specified number of LED's at the specified interval, with the specified color.
 int blinkLEDColors(int nr_leds, uint32_t color, int on_time, int off_time) {
   for(uint16_t i=0; i<nr_leds; i++) {
     strip.setPixelColor(i, color);
@@ -99,9 +102,12 @@ void loop() {
   agl = pressure.altitude(P, read_baseline.field1);
   int calibrateButtonPressed = digitalRead(baseline_pin);
 
+  // If the calibrate button is pressed, create a new baseline.
   /* Reversed logic due to build in pullup resistor.
   The reading is low when the button is pressed. */
   if (calibrateButtonPressed == LOW) {
+
+    // Make a new pressure reading.
     baseline = getPressure(); 
 
     Serial.print("Sensor value low. Baseline = ");
@@ -111,24 +117,15 @@ void loop() {
     Serial.print("Pressure = ");
     Serial.println(P);
 
+    // Store the new pressure in EEPROM.
     EEPROM.put(eeprom_address, baseline);
-//    EEPROM.write(eeprom_address, baseline / 10);
- //   setLEDColors(num_leds,green);
     startup = 0;
     cycleLEDColors(num_leds,green,200);
     delay(1000);
   } else {
+    // If the calibrate button is not pressed, proceed as normal.
     setLEDColors(num_leds,off);
     EEPROM.get(eeprom_address, read_baseline);
-
-//  The problem here is that the EEPROM only handles numbers up to 255.
-//  The pressure needs to be more accurate than that. An example of a pressure reading on ground level is 517.47.
-//  If this is simplified to only 51, too much information is lost and accuracy suffers.
-//  At least two decimals needs to be saved. This of course cannot be done on one EEPROM address.
-//  A solution would instead be to add the whole numbers to one EEPROM address, and the decimals to another.
-
-//  Probably better solution: write every number to one EEPROM address. The comma sign is written as 255.
-//  Read the EEPROM addresses starting at 0 and stopping at two addresses after the 255.
 
     Serial.print("Sensor value high. Baseline = ");
     Serial.print(read_baseline.field1);
@@ -137,14 +134,16 @@ void loop() {
     Serial.print(". Pressure (P) = ");
     Serial.println(P);
     delay(500);
-    
+
+    // Light up all LED's as violet for a second to show that we are in regular operations mode.
     if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
       setLEDColors(num_leds, violet);
       delay(1000);
       setLEDColors(num_leds, off);
       startup = 1;
     }
-    
+
+    // Light up or blink the LEDs in different patterns depending on altitude.
     if (agl > 3500) {
       setLEDColors(num_leds,blue);
     }
@@ -168,25 +167,8 @@ void loop() {
     }
   }
 }
-  /*
-  double getPressure() {
-    char status;
-    double T, P, p0, a;
-  
-    pressure.startTemperature();
-    pressure.getTemperature(T);
-    status = pressure.startPressure(3);
-    if (status != 0)
-      {
-        delay(status);
-        status = pressure.getPressure(P, T);
-        return (P);
-      }
-    else Serial.println("error starting temperature measurement\n");
-  }*/
 
-
-  double getPressure()
+double getPressure()
 {
   char status;
   double T,P,p0,a;
