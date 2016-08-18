@@ -113,6 +113,8 @@ void loop() {
     // calibrate)
     baseline = getPressure(); 
     EEPROM.put(baseline_address, baseline);
+    Serial.print("Baseline set");
+    delay(10000);
   }
   else if (powercycles_updated == 0) {
     powercycles = (calibrate + 1);
