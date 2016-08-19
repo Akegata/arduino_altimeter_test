@@ -38,7 +38,7 @@ double baseline;
 int startup = 0;
 int altreached = 0;
 
-struct MyObject{
+struct MyObject {
   double field1;
   byte field2;
   char name[10];
@@ -46,16 +46,16 @@ struct MyObject{
 
 // Sets the specified numbers of LEDs to the specifiedcolor.
 int setLEDColors(int nr_leds, uint32_t color) {
-  for(uint16_t i=0; i<nr_leds; i++) {
-      strip.setPixelColor(i, color);
+  for (uint16_t i = 0; i < nr_leds; i++) {
+    strip.setPixelColor(i, color);
   }
   strip.show();
 }
 
 // Cycles through the LED's, only lighting up one LED at a time.
 int cycleLEDColors(int nr_leds, uint32_t color, int cycle_time) {
-  setLEDColors(num_leds,off);
-  for(uint16_t i=0; i<nr_leds; i++) {
+  setLEDColors(num_leds, off);
+  for (uint16_t i = 0; i < nr_leds; i++) {
     strip.setPixelColor(i, color);
     strip.show();
     delay(cycle_time);
@@ -67,12 +67,12 @@ int cycleLEDColors(int nr_leds, uint32_t color, int cycle_time) {
 
 // Blinks the specified number of LED's at the specified interval, with the specified color.
 int blinkLEDColors(int nr_leds, uint32_t color, int on_time, int off_time) {
-  for(uint16_t i=0; i<nr_leds; i++) {
+  for (uint16_t i = 0; i < nr_leds; i++) {
     strip.setPixelColor(i, color);
   }
   strip.show();
   delay(on_time);
-  for(uint16_t i=0; i<nr_leds; i++) {
+  for (uint16_t i = 0; i < nr_leds; i++) {
     strip.setPixelColor(i, off);
   }
   strip.show();
@@ -111,86 +111,90 @@ void loop() {
 
   if (calibrate == 3) {
     // calibrate)
-    baseline = getPressure(); 
+    cycleLEDColors(num_leds, red, 200);
+    baseline = getPressure();
     EEPROM.put(baseline_address, baseline);
     Serial.print("Baseline set");
     delay(10000);
   }
   else if (powercycles_updated == 0) {
+
     powercycles = (calibrate + 1);
     Serial.print("Power cycles updated = ");
     Serial.println(powercycles_updated);
     Serial.print("Power cycles = ");
     Serial.println(powercycles);
-    EEPROM.write(0,powercycles);
+    EEPROM.write(0, powercycles);
     powercycles_updated = 1;
     Serial.print("Power cycles updated = ");
     Serial.println(powercycles_updated);
+
+    cycleLEDColors(num_leds, blue, 200);
     delay(2000);
   }
-/*  if (calibrateButtonPressed == LOW) {
+  /*  if (calibrateButtonPressed == LOW) {
 
-    // Make a new pressure reading.
-    baseline = getPressure(); 
+      // Make a new pressure reading.
+      baseline = getPressure();
 
-    Serial.print("Sensor value low. Baseline = ");
-    Serial.println(baseline);
-    Serial.print("Written to EEPROM:");
-    Serial.println(baseline / 10);
-    Serial.print("Pressure = ");
-    Serial.println(P);
+      Serial.print("Sensor value low. Baseline = ");
+      Serial.println(baseline);
+      Serial.print("Written to EEPROM:");
+      Serial.println(baseline / 10);
+      Serial.print("Pressure = ");
+      Serial.println(P);
 
-    // Store the new pressure in EEPROM.
-    EEPROM.put(baseline_address, baseline);
-    startup = 0;
-    cycleLEDColors(num_leds,green,200);
-    delay(1000);
-  } else { */
-    // If the calibrate button is not pressed, proceed as normal.
-
-    powercycles = (0);
-    EEPROM.write(0,powercycles);
-    
-    setLEDColors(num_leds,off);
-    EEPROM.get(baseline_address, read_baseline);
-
-    Serial.print("Sensor value high. Baseline = ");
-    Serial.print(read_baseline.field1);
-    Serial.print(". agl = ");
-    Serial.print(agl);
-    Serial.print(". Pressure (P) = ");
-    Serial.println(P);
-    delay(500);
-
-    // Light up all LED's as violet for a second to show that we are in regular operations mode.
-    if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
-      setLEDColors(num_leds, violet);
+      // Store the new pressure in EEPROM.
+      EEPROM.put(baseline_address, baseline);
+      startup = 0;
+      cycleLEDColors(num_leds,green,200);
       delay(1000);
-      setLEDColors(num_leds, off);
-      startup = 1;
-    }
+    } else { */
+  // If the calibrate button is not pressed, proceed as normal.
 
-    // Light up or blink the LEDs in different patterns depending on altitude.
-    if (agl > 3500) {
-      setLEDColors(num_leds,blue);
-    }
-    else if (agl < 3500 && agl > 3000) {
-      blinkLEDColors(num_leds,blue,1000,1000);
-    }
-    else if (agl < 3000 && agl > 2500) {
-      setLEDColors(num_leds,green);
-    }
-    else if (agl < 2500 && agl > 2000) {
-      blinkLEDColors(num_leds,green,1000,1000);
-    }
-    else if (agl < 2000 && agl > 1500) {
-      setLEDColors(num_leds,yellow);
-    }
-    else if (agl < 1500 && agl > 1000) {
-      setLEDColors(num_leds,red);
-    }
-    else if (agl < 1000 && agl > 500) {
-      blinkLEDColors(num_leds,red,300,300);
+  powercycles = (0);
+  EEPROM.write(0, powercycles);
+
+  setLEDColors(num_leds, off);
+  EEPROM.get(baseline_address, read_baseline);
+
+  Serial.print("Sensor value high. Baseline = ");
+  Serial.print(read_baseline.field1);
+  Serial.print(". agl = ");
+  Serial.print(agl);
+  Serial.print(". Pressure (P) = ");
+  Serial.println(P);
+  delay(500);
+
+  // Light up all LED's as violet for a second to show that we are in regular operations mode.
+  if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
+    setLEDColors(num_leds, violet);
+    delay(1000);
+    setLEDColors(num_leds, off);
+    startup = 1;
+  }
+
+  // Light up or blink the LEDs in different patterns depending on altitude.
+  if (agl > 3500) {
+    setLEDColors(num_leds, blue);
+  }
+  else if (agl < 3500 && agl > 3000) {
+    blinkLEDColors(num_leds, blue, 1000, 1000);
+  }
+  else if (agl < 3000 && agl > 2500) {
+    setLEDColors(num_leds, green);
+  }
+  else if (agl < 2500 && agl > 2000) {
+    blinkLEDColors(num_leds, green, 1000, 1000);
+  }
+  else if (agl < 2000 && agl > 1500) {
+    setLEDColors(num_leds, yellow);
+  }
+  else if (agl < 1500 && agl > 1000) {
+    setLEDColors(num_leds, red);
+  }
+  else if (agl < 1000 && agl > 500) {
+    blinkLEDColors(num_leds, red, 300, 300);
     //}
   }
 }
@@ -198,7 +202,7 @@ void loop() {
 double getPressure()
 {
   char status;
-  double T,P,p0,a;
+  double T, P, p0, a;
 
   status = pressure.startTemperature();
   if (status != 0)
@@ -213,10 +217,10 @@ double getPressure()
       {
         delay(status);
 
-        status = pressure.getPressure(P,T);
+        status = pressure.getPressure(P, T);
         if (status != 0)
         {
-          return(P);
+          return (P);
         }
         else Serial.println("error retrieving pressure measurement\n");
       }
