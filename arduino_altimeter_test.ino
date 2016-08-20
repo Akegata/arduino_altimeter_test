@@ -35,8 +35,9 @@ int powercycles_updated = 0;
 int baseline_address = 1;
 
 double baseline;
-int startup = 0;
-int altreached = 0;
+int startup     = 0;
+int altreached  = 0;
+int blink       = 0;
 
 struct MyObject {
   double field1;
@@ -105,56 +106,27 @@ void loop() {
   agl = pressure.altitude(P, read_baseline.field1);
   int calibrateButtonPressed = digitalRead(baseline_pin);
 
-  // If the calibrate button is pressed, create a new baseline.
-  /* Reversed logic due to build in pullup resistor.
-  The reading is low when the button is pressed. */
-
-  if (calibrate == 3) {
-    // calibrate)
-    cycleLEDColors(num_leds, red, 200);
+  // On the third power cycle, reset the calibration
+  if (calibrate == 2) {
     baseline = getPressure();
+    blinkLEDColors(num_leds, red, 500, 500);
     EEPROM.put(baseline_address, baseline);
     Serial.print("Baseline set");
-    delay(10000);
+    powercycles_updated = 1;
   }
-  else if (powercycles_updated == 0) {
 
+  // Update the powercycle count.
+  else if (powercycles_updated == 0) {
     powercycles = (calibrate + 1);
-    Serial.print("Power cycles updated = ");
-    Serial.println(powercycles_updated);
-    Serial.print("Power cycles = ");
-    Serial.println(powercycles);
     EEPROM.write(0, powercycles);
     powercycles_updated = 1;
-    Serial.print("Power cycles updated = ");
-    Serial.println(powercycles_updated);
 
     cycleLEDColors(num_leds, blue, 200);
     delay(2000);
   }
-  /*  if (calibrateButtonPressed == LOW) {
-
-      // Make a new pressure reading.
-      baseline = getPressure();
-
-      Serial.print("Sensor value low. Baseline = ");
-      Serial.println(baseline);
-      Serial.print("Written to EEPROM:");
-      Serial.println(baseline / 10);
-      Serial.print("Pressure = ");
-      Serial.println(P);
-
-      // Store the new pressure in EEPROM.
-      EEPROM.put(baseline_address, baseline);
-      startup = 0;
-      cycleLEDColors(num_leds,green,200);
-      delay(1000);
-    } else { */
-  // If the calibrate button is not pressed, proceed as normal.
-
+  
   powercycles = (0);
   EEPROM.write(0, powercycles);
-
   setLEDColors(num_leds, off);
   EEPROM.get(baseline_address, read_baseline);
 
@@ -164,13 +136,14 @@ void loop() {
   Serial.print(agl);
   Serial.print(". Pressure (P) = ");
   Serial.println(P);
-  delay(500);
+//  delay(500);
 
   // Light up all LED's as violet for a second to show that we are in regular operations mode.
   if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
-    setLEDColors(num_leds, violet);
-    delay(1000);
-    setLEDColors(num_leds, off);
+    while(blink < 3){
+      blinkLEDColors(num_leds, green, 100, 100);
+      blink++;
+    }
     startup = 1;
   }
 
