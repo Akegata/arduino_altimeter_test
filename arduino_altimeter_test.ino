@@ -12,6 +12,7 @@ SFE_BMP180 pressure;
 #define PIN 2
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(4, PIN, NEO_GRB + NEO_KHZ800);
 
+// Define different colors for easier use.
 uint32_t blue      = strip.Color(0, 0, 255);
 uint32_t cyan      = strip.Color(36, 182, 255);
 uint32_t cyan_dim  = strip.Color(0, 20, 20);
@@ -22,22 +23,15 @@ uint32_t white_dim = strip.Color(20, 20, 20);
 uint32_t yellow    = strip.Color(255, 255, 0);
 uint32_t off       = strip.Color(0, 0, 0);
 
-int exitalt      = 4000; // Set exit altitude.
-int breakalt     = 1500; // Set breakoff altitude.
-int pullalt      = 1000; // Set pull altitude.
-int harddeck     = 700;  // Set hard deck.
-int num_leds     = 4;    // Set number of LEDs
-int baseline_pin = 9; // Set pin for baseline button.
-int powercycles  = 0;
+int num_leds            = 4;    // Set number of LEDs
+int powercycles         = 0;
 int powercycles_updated = 0;
+int startup             = 0;
+int blink               = 0;
 
 // Address in the EEPROM where the baseline reading should be stored.
 int baseline_address = 1;
-
 double baseline;
-int startup     = 0;
-int altreached  = 0;
-int blink       = 0;
 
 struct MyObject {
   double field1;
@@ -89,10 +83,7 @@ void setup() {
     Serial.println("BMP180 init fail (disconnected?)\n\n");
     while (1);
   }
-
-  // Connect the baseline button to pin 8.
-  pinMode(baseline_pin, INPUT_PULLUP);
-
+  
   strip.begin();
   strip.show();
 }
@@ -104,7 +95,6 @@ void loop() {
   EEPROM.get(baseline_address, read_baseline);
   int calibrate = (EEPROM.read(0));
   agl = pressure.altitude(P, read_baseline.field1);
-  int calibrateButtonPressed = digitalRead(baseline_pin);
 
   // On the third power cycle, reset the calibration
   if (calibrate == 2) {
@@ -124,26 +114,27 @@ void loop() {
     cycleLEDColors(num_leds, blue, 200);
     delay(2000);
   }
-  
+
+  // Reset the power cycle count and read the baseline from EEPROM.
   powercycles = (0);
   EEPROM.write(0, powercycles);
   setLEDColors(num_leds, off);
   EEPROM.get(baseline_address, read_baseline);
 
-  Serial.print("Sensor value high. Baseline = ");
+  Serial.print("Baseline pressure = ");
   Serial.print(read_baseline.field1);
+  Serial.print(". Current pressure = ");
+  Serial.print(P);
   Serial.print(". agl = ");
-  Serial.print(agl);
-  Serial.print(". Pressure (P) = ");
-  Serial.println(P);
-//  delay(500);
+  Serial.println(agl);
 
-  // Light up all LED's as violet for a second to show that we are in regular operations mode.
+  // Blink LED's green tbree times to indicate that the altimeter is running.
   if (startup == 0) { // Violet through all LEDs on startup. Sets startup variable to 1.
     while(blink < 3){
       blinkLEDColors(num_leds, green, 100, 100);
       blink++;
     }
+    blink = 0;
     startup = 1;
   }
 
@@ -168,7 +159,6 @@ void loop() {
   }
   else if (agl < 1000 && agl > 500) {
     blinkLEDColors(num_leds, red, 300, 300);
-    //}
   }
 }
 
