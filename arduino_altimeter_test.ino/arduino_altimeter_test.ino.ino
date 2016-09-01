@@ -1,13 +1,11 @@
-// LED Skydive Altimeter Sketch by Martin Hovmöller
-// Fork of Bodey Marcoccias sketch http://www.thingiverse.com/thing:631637.
-// Altitude settings can be modified by changing the four altitude variables near the top of the code.
-//#include <Adafruit_BMP085.h>
+// LED Skydive Altimeter by Martin Hovmöller
+
 #include <EEPROM.h>
-#include <SFE_BMP180.h>
 #include <Wire.h>
 #include <Adafruit_NeoPixel.h>
+#include <Adafruit_BMP085.h>
 
-SFE_BMP180 pressure;
+Adafruit_BMP085 bmp;
 
 #define PIN 2
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(4, PIN, NEO_GRB + NEO_KHZ800);
@@ -77,11 +75,9 @@ int blinkLEDColors(int nr_leds, uint32_t color, int on_time, int off_time) {
 void setup() {
   Serial.begin(9600);
 
-  if (pressure.begin())
-    Serial.println("BMP180 init success");
-  else {
-    Serial.println("BMP180 init fail (disconnected?)\n\n");
-    while (1);
+  if (!bmp.begin()) {
+    Serial.println("Could not find a valid BMP085 sensor, check wiring!");
+    while (1) {}
   }
   
   strip.begin();
@@ -90,15 +86,13 @@ void setup() {
 
 void loop() {
   MyObject read_baseline;
-  double agl, P;
-  P = getPressure();
   EEPROM.get(baseline_address, read_baseline);
   int calibrate = (EEPROM.read(0));
-  agl = pressure.altitude(P, read_baseline.field1);
+  int agl = bmp.readAltitude() - read_baseline.field1;
 
   // On the third power cycle, reset the calibration
   if (calibrate == 2) {
-    baseline = getPressure();
+    baseline = bmp.readAltitude();
     blinkLEDColors(num_leds, red, 500, 500);
     EEPROM.put(baseline_address, baseline);
     Serial.print("Baseline set");
@@ -124,7 +118,7 @@ void loop() {
   Serial.print("Baseline pressure = ");
   Serial.print(read_baseline.field1);
   Serial.print(". Current pressure = ");
-  Serial.print(P);
+  Serial.print(bmp.readAltitude());
   Serial.print(". agl = ");
   Serial.println(agl);
 
@@ -160,36 +154,4 @@ void loop() {
   else if (agl < 1000 && agl > 500) {
     blinkLEDColors(num_leds, red, 300, 300);
   }
-}
-
-double getPressure()
-{
-  char status;
-  double T, P, p0, a;
-
-  status = pressure.startTemperature();
-  if (status != 0)
-  {
-    delay(status);
-
-    status = pressure.getTemperature(T);
-    if (status != 0)
-    {
-      status = pressure.startPressure(3);
-      if (status != 0)
-      {
-        delay(status);
-
-        status = pressure.getPressure(P, T);
-        if (status != 0)
-        {
-          return (P);
-        }
-        else Serial.println("error retrieving pressure measurement\n");
-      }
-      else Serial.println("error starting pressure measurement\n");
-    }
-    else Serial.println("error retrieving temperature measurement\n");
-  }
-  else Serial.println("error starting temperature measurement\n");
 }
