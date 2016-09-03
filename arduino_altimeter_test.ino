@@ -26,6 +26,7 @@ int powercycles         = 0;
 int powercycles_updated = 0;
 int startup             = 0;
 int blink               = 0;
+int current_color;
 
 // Address in the EEPROM where the baseline reading should be stored.
 int baseline_address = 1;
@@ -39,10 +40,17 @@ struct MyObject {
 
 // Sets the specified numbers of LEDs to the specifiedcolor.
 int setLEDColors(int nr_leds, uint32_t color) {
-  for (uint16_t i = 0; i < nr_leds; i++) {
-    strip.setPixelColor(i, color);
+  if (current_color != color) {
+    for (uint16_t i = 0; i < nr_leds; i++) {
+     strip.setPixelColor(i, off);
+    }
+    strip.show();
+    for (uint16_t i = 0; i < nr_leds; i++) {
+      strip.setPixelColor(i, color);
+    }
+    strip.show();
+    current_color = color;
   }
-  strip.show();
 }
 
 // Cycles through the LED's, only lighting up one LED at a time.
@@ -137,13 +145,13 @@ void loop() {
     setLEDColors(num_leds, blue);
   }
   else if (agl < 3500 && agl > 3000) {
-    blinkLEDColors(num_leds, blue, 1000, 1000);
+    blinkLEDColors(num_leds, blue, 800, 800);
   }
   else if (agl < 3000 && agl > 2500) {
     setLEDColors(num_leds, green);
   }
   else if (agl < 2500 && agl > 2000) {
-    blinkLEDColors(num_leds, green, 1000, 1000);
+    blinkLEDColors(num_leds, green, 800, 800);
   }
   else if (agl < 2000 && agl > 1500) {
     setLEDColors(num_leds, yellow);
